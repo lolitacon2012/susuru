@@ -1,0 +1,24 @@
+import { JSDOM } from 'jsdom';
+import { render } from './core';
+import { SusuruElement } from './types';
+
+const renderElementToString = (rootElement: SusuruElement, rootId?: string, htmlBase?: string) => {
+    const root = rootId || '_root';
+    const html = htmlBase || `<!DOCTYPE html>
+    <html>
+    <head>
+        <title>Susuru</title>
+    </head>
+    
+    <body>
+        <div id="${rootId}"></div>
+    </body>
+    </html>`
+    const jsdom = new JSDOM(htmlBase);
+    const _document = jsdom.window.document;
+    const container = _document.getElementById(rootId);
+    render(rootElement, container, document);
+    console.log(jsdom.serialize());
+}
+
+export { renderElementToString };

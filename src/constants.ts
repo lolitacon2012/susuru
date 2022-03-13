@@ -1,0 +1,1 @@
+export const SUSURU_TEXT_ELEMENT_TYPE = 'text';
