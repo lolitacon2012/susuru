@@ -7,5 +7,5 @@ const Susuru = {
 }
 export { createElement as h, createElement } from './core'
 export default Susuru;
-console.log("This web application is powered by Susuru.js")
+console.log("This web application is powered by Susuru.js!")
 scheduler.init();

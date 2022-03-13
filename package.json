@@ -1,5 +1,5 @@
 {
-  "name": "Susuru",
+  "name": "susuru",
   "version": "0.0.1",
   "type": "module",
   "main": "./dist/index.js",
@@ -10,11 +10,9 @@
   "author": "Liu Dake <kannagi.cafe>",
   "license": "Unlicense",
   "scripts": {
-    "demo": "yarn build:dist && serve demo",
-    "clean:dist": "rm -rf demo/dist",
-    "clean": "rm -rf dist && yarn clean:dist",
-    "build:dist": "yarn clean:dist && rollup -c --environment target:demo",
-    "build": "yarn clean && rollup -c --environment target:main && rollup -c --environment target:demo"
+    "dev": "yarn vite",
+    "clean": "rm -rf dist && rm -rf demo/dist",
+    "build": "yarn clean && rollup -c --environment target:main"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^21.0.2",
@@ -27,6 +25,7 @@
     "rollup-plugin-typescript2": "^0.31.2",
     "serve": "^13.0.2",
     "tslib": "^2.3.1",
-    "typescript": "^4.6.2"
+    "typescript": "^4.6.2",
+    "vite": "^2.8.6"
   }
 }

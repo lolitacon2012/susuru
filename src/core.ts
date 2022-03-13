@@ -45,14 +45,12 @@ const createDom = (fiber: Fiber, _document?: Document) => {
 }
 
 const renderFiber = (fiber: Fiber): Function => {
-    console.log('renderFiber')
     if (!fiber.dom) {
         fiber.dom = createDom(fiber)
     }
     if (fiber.parent) {
         fiber.parent.dom.appendChild(fiber.dom)
     }
-    console.log(fiber);
     const elements = fiber.node.props.children;
     let prevSibling = null;
     elements.forEach((element, index) => {
