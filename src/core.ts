@@ -31,7 +31,7 @@ const createTextElement = (text?: string | number | undefined | null | boolean):
     }
 }
 
-const createDom = (fiber: Fiber, _document?: Document) => {
+const createDomForFiber = (fiber: Fiber, _document?: Document) => {
     const __document = _document || document;
     const isText = fiber.node.type === SUSURU_TEXT_ELEMENT_TYPE;
     if (isText) {
@@ -44,12 +44,10 @@ const createDom = (fiber: Fiber, _document?: Document) => {
     }
 }
 
-const renderFiber = (fiber: Fiber): Function => {
+// This function returns callback function that ready to execute next fiber weaving
+const weaveFiber = (fiber: Fiber): Function => {
     if (!fiber.dom) {
-        fiber.dom = createDom(fiber)
-    }
-    if (fiber.parent) {
-        fiber.parent.dom.appendChild(fiber.dom)
+        fiber.dom = createDomForFiber(fiber)
     }
     const elements = fiber.node.props.children;
     let prevSibling = null;
@@ -67,27 +65,47 @@ const renderFiber = (fiber: Fiber): Function => {
         prevSibling = newFiber;
     })
     if (fiber.child) {
-        return () => renderFiber(fiber.child);
+        return () => weaveFiber(fiber.child);
     }
     let nextFiber = fiber
     while (nextFiber) {
         if (nextFiber.sibling) {
-            return () => renderFiber(nextFiber.sibling);
+            return () => weaveFiber(nextFiber.sibling);
         }
         nextFiber = nextFiber.parent
     }
+
+    // Nothing left to do, 
     return () => { };
 }
 
+const commitWork = (fiber?: Fiber) => {
+    if (!fiber) {
+        return;
+    }
+    const domParent = fiber.parent.dom;
+    domParent.appendChild(fiber.dom);
+    commitWork(fiber.child);
+    commitWork(fiber.sibling);
+}
+
 const render = (element: SusuruElement, container: HTMLElement, _document?: Document) => {
-    scheduler.setNextUnitOfWork(() => renderFiber({
+    const wipRoot = {
         dom: container,
         node: {
             props: {
                 children: [element]
             }
         } as SusuruElement,
-    }));
+        isRoot: true
+    } as Fiber;
+    scheduler.setNextUnitOfWork(() => {
+        return weaveFiber(wipRoot)
+    });
+    scheduler.setOnTasksFinished((hasFinishedAllTasks) => {
+        // child of wipRoot will be filled in after first weaveFiber
+        hasFinishedAllTasks && commitWork(wipRoot.child);
+    })
 }
 
 export { createElement, render };

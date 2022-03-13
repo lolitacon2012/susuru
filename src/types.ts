@@ -13,4 +13,6 @@ export interface Fiber {
   parent?: Fiber
   sibling?: Fiber
   child?: Fiber
+  isRoot?: boolean
+  previousState?: Fiber
 }

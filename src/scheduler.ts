@@ -1,8 +1,10 @@
 class Scheduler {
     private nextUnitOfWork: Function | null;
     private initialized: boolean;
+    private onTasksFinished: (hasFinishedAllTasks: boolean) => void | null;
     constructor() {
         this.nextUnitOfWork = null;
+        this.onTasksFinished = null;
         this.initialized = false;
     }
     private workLoop: IdleRequestCallback = deadline => {
@@ -20,7 +22,9 @@ class Scheduler {
             this.nextUnitOfWork = this.performUnitOfWork()
             shouldYield = deadline.timeRemaining() < 1
         }
-        requestIdleCallback(this.workLoop)
+        this.onTasksFinished && this.onTasksFinished(!this.nextUnitOfWork);
+        this.onTasksFinished = null;
+        requestIdleCallback(this.workLoop);
     }
     public init = () => {
         if (this.initialized === false) {
@@ -33,6 +37,10 @@ class Scheduler {
 
     public setNextUnitOfWork = nextUnitOfWork => {
         this.nextUnitOfWork = nextUnitOfWork;
+    }
+
+    public setOnTasksFinished = (callBack: typeof this.onTasksFinished) => {
+        this.onTasksFinished = callBack;
     }
 
     public performUnitOfWork = (...additionalArgs) => {
