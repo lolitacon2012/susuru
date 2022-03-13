@@ -7,4 +7,10 @@ export interface SusuruElement {
   key?: string
 }
 
-
+export interface Fiber {
+  dom?: HTMLElement | Text
+  node: SusuruElement
+  parent?: Fiber
+  sibling?: Fiber
+  child?: Fiber
+}

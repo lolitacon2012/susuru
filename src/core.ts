@@ -1,5 +1,6 @@
 import { SUSURU_TEXT_ELEMENT_TYPE } from './constants';
-import { SusuruElement, SusuruElementType } from './types';
+import { Fiber, SusuruElement, SusuruElementType } from './types';
+import { scheduler } from './scheduler';
 
 const createElement = (type: SusuruElementType, props: any, ...children: SusuruElement[]): SusuruElement => {
     return {
@@ -30,20 +31,65 @@ const createTextElement = (text?: string | number | undefined | null | boolean):
     }
 }
 
-const render = (element: SusuruElement, container: HTMLElement, _document?: Document) => {
+const createDom = (fiber: Fiber, _document?: Document) => {
     const __document = _document || document;
-    const isText = element.type === SUSURU_TEXT_ELEMENT_TYPE;
+    const isText = fiber.node.type === SUSURU_TEXT_ELEMENT_TYPE;
     if (isText) {
-        const dom = __document.createTextNode(element.props?.nodeValue || '');
-        container.appendChild(dom);
+        const dom = __document.createTextNode(fiber.node.props?.nodeValue || '');
+        return dom;
     } else {
-        const dom = __document.createElement(element.type);
-        Object.keys(element.props).filter(p => p !== 'children').forEach((p) => dom.setAttribute(p, element.props[p]));
-        (element.props.children || []).forEach(child => {
-            render(child, dom);
-        })
-        container.appendChild(dom);
+        const dom = __document.createElement(fiber.node.type);
+        Object.keys(fiber.node.props).filter(p => p !== 'children').forEach((p) => dom.setAttribute(p, fiber.node.props[p]));
+        return dom;
     }
+}
+
+const renderFiber = (fiber: Fiber): Function => {
+    console.log('renderFiber')
+    if (!fiber.dom) {
+        fiber.dom = createDom(fiber)
+    }
+    if (fiber.parent) {
+        fiber.parent.dom.appendChild(fiber.dom)
+    }
+    console.log(fiber);
+    const elements = fiber.node.props.children;
+    let prevSibling = null;
+    elements.forEach((element, index) => {
+        const newFiber = {
+            node: element,
+            parent: fiber,
+            dom: null,
+        }
+        if (index === 0) {
+            fiber.child = newFiber;
+        } else {
+            prevSibling.sibling = newFiber;
+        }
+        prevSibling = newFiber;
+    })
+    if (fiber.child) {
+        return () => renderFiber(fiber.child);
+    }
+    let nextFiber = fiber
+    while (nextFiber) {
+        if (nextFiber.sibling) {
+            return () => renderFiber(nextFiber.sibling);
+        }
+        nextFiber = nextFiber.parent
+    }
+    return () => { };
+}
+
+const render = (element: SusuruElement, container: HTMLElement, _document?: Document) => {
+    scheduler.setNextUnitOfWork(() => renderFiber({
+        dom: container,
+        node: {
+            props: {
+                children: [element]
+            }
+        } as SusuruElement,
+    }));
 }
 
 export { createElement, render };

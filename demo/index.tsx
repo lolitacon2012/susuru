@@ -1,9 +1,11 @@
 import Susuru, { createElement } from '../src/index';
 
 const element = (
-  <div id="foobar">
-    <a href="www.baidu.com">google</a>
-    <b>Strong!</b>
+  <div id="foo">
+    <h1>Hello world!</h1>
+    <div id="bar">
+      <p>I am from a <span style="color: red;">fiber</span>.</p>
+    </div>
   </div>
 )
 
