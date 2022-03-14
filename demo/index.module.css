@@ -1,0 +1,39 @@
+.app {
+    width           : 320px;
+    background-color: beige;
+    padding         : 0px 24px 24px 24px;
+}
+
+.taskContainer {
+    color  : #1917a9;
+    display: block;
+}
+
+.taskLabel {
+    font-style: italic;
+}
+
+.addButton,
+.taskContainer,
+.taskContainer * {
+    cursor: pointer;
+}
+
+.done {
+    text-decoration: line-through;
+}
+
+.taskList {
+    display       : flex;
+    flex-direction: column;
+}
+
+.controllers {
+    display        : flex;
+    justify-content: space-between;
+    margin-bottom  : 24px;
+}
+
+.newTaskInput {
+    width: 240px;
+}

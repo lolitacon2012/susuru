@@ -1,8 +1,12 @@
 import * as Core from './core';
+import * as Utils from './utils';
 import './init';
 
 const Susuru = {
     ...Core,
+    ...Utils,
 }
-export { createElement as h, createElement } from './core'
+
+export { createElement } from './core'
 export default Susuru;
+

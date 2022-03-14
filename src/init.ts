@@ -1,5 +1,3 @@
-import { scheduler } from './scheduler';
+// Executed when initialized
 
-scheduler.init();
-
-console.log("This web application is powered by Susuru.js!")
+console.log("This web application is powered by Susuru.js, not React!")

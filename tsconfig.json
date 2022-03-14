@@ -21,6 +21,6 @@
     "dist"
   ],
   "include": [
-    "src"
+    "src", "demo/index.module.css"
   ]
 }

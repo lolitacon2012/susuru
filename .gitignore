@@ -2,7 +2,7 @@ node_modules/
 /.idea/
 /.cache/
 yarn-error.log
-dist/
+**/dist/
 /**/node_modules/
 .DS_Store
 .ignore/

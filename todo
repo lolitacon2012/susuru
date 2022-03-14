@@ -1,0 +1,6 @@
+- implement useEffect
+- clean up all constants
+- add hook types
+- clean up tree comparision algo
+- try useSyncState
+- rollup export bundling

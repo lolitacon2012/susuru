@@ -12,7 +12,8 @@
   "scripts": {
     "dev": "yarn vite",
     "clean": "rm -rf dist && rm -rf demo/dist",
-    "build": "yarn clean && rollup -c --environment target:main"
+    "build": "yarn clean && rollup -c && yarn vite build",
+    "serve": "yarn build && serve demo/dist"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^21.0.2",

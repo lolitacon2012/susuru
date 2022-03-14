@@ -1,5 +1,5 @@
 export type SusuruText = string;
-export type SusuruElementType = (keyof HTMLElementTagNameMap) | SusuruText;
+export type SusuruElementType = (keyof HTMLElementTagNameMap) | SusuruText | Function
 
 export interface SusuruElement {
   type: SusuruElementType
@@ -15,4 +15,6 @@ export interface Fiber {
   child?: Fiber
   isRoot?: boolean
   previousState?: Fiber
+  effectTag?: string
+  hooks?: any[]
 }
