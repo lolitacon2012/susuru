@@ -1,4 +1,4 @@
-import Susuru, { createElement } from '../src/index';
+import { Susuru, createElement } from '../src/index';
 import style from './index.module.css';
 
 interface TaskProps {
