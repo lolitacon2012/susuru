@@ -1,10 +1,19 @@
+import HookController from './hook';
+import Scheduler from './scheduler';
 import VdomController from './vdom';
 
 // Vdom controller has all hooks
-const vdom = new VdomController();
+
+const scheduler = new Scheduler();
+const hookController = new HookController();
+const vdom = new VdomController(scheduler, hookController);
+
 const createElement = vdom.createElement;
-const mount = vdom.render;
+const render = vdom.render;
 const reRender = vdom.reRender;
-const useState = vdom.hookController?.useState;
-const useMounted = vdom.hookController?.useMounted;
-export { createElement, mount, reRender, useState, useMounted };
+
+const useState = hookController.useState;
+const useEffect = hookController.useEffect;
+const useStore = hookController.useStore;
+
+export { createElement, render, reRender, useState, useEffect, useStore };

@@ -8,5 +8,5 @@ const Susuru = {
 }
 
 export { createElement } from './core'
-export default Susuru;
+export { Susuru };
 

@@ -16,5 +16,19 @@ export interface Fiber {
   isRoot?: boolean
   previousState?: Fiber
   effectTag?: string
-  hooks?: any[]
+  hooks?: Hook[]
+  onDelete?: () => void
+}
+
+export type Hook = StateHook<any> | EffectHook | StoreHook<any>;
+export type StateHook<T> = {
+  state: T,
+  nextState: T[]
+}
+export type EffectHook = {
+  onUnmount?: () => void,
+  dependencies: any[]
+}
+export type StoreHook<T extends object> = {
+  store: ProxyHandler<T>,
 }

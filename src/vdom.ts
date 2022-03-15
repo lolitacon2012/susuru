@@ -11,9 +11,9 @@ class VdomController {
     private scheduler: Scheduler = null;
     public hookController: HookController = null;
 
-    constructor() {
-        this.scheduler = new Scheduler();
-        this.hookController = new HookController();
+    constructor(s: Scheduler, h: HookController) {
+        this.scheduler = s;
+        this.hookController = h;
     }
 
     // Create a new vdom node
@@ -35,13 +35,13 @@ class VdomController {
 
     // Create a new vdom text node
     private createTextElement = (text?: string | number | undefined | null | boolean): SusuruElement => {
-        if (typeof text !== 'string' && typeof text !== 'number') {
+        if ((typeof text !== 'string') && (typeof text !== 'number')) {
             text = '';
         }
         return {
             type: SUSURU_TEXT_ELEMENT_TYPE,
             props: {
-                nodeValue: text,
+                nodeValue: text.toString(),
                 children: []
             },
         }
@@ -269,6 +269,9 @@ class VdomController {
     }
 
     public reRender = () => {
+        if (!this.currentRoot) {
+            return;
+        }
         const wipRoot = {
             dom: this.currentRoot.dom,
             node: this.currentRoot.node,

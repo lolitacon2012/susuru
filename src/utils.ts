@@ -17,4 +17,17 @@ const flatArray = <T>(arr: (T | T[])[]) => {
 const className = (classNames: string[]) => {
     return classNames.filter(c => !!c).join(' ');
 }
-export { debugLog, flatArray, className };
+
+// convert an object to proxy recursively
+const proxifyObject = (obj, handler) => {
+    if ((typeof obj === 'object') && (obj !== null)) {
+        const proxified = Array.isArray(obj) ? [] : {};
+        Reflect.ownKeys(obj).forEach(k => {
+            proxified[k] = proxifyObject(obj[k], handler);
+        });
+        return new Proxy(proxified, handler);
+    } else {
+        return obj;
+    }
+}
+export { debugLog, flatArray, className, proxifyObject };

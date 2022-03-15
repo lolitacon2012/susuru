@@ -1,6 +1,12 @@
+DONE
 - implement useEffect
-- clean up all constants
 - add hook types
+- add useStore with proxy
+
+TODO
+- fix insert child wrong order problem
+- clean up all constants
 - clean up tree comparision algo
 - try useSyncState
 - rollup export bundling
+- support mounting multiple apps
