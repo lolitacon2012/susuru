@@ -12,8 +12,10 @@ const createElement = vdom.createElement;
 const render = vdom.render;
 const reRender = vdom.reRender;
 
+const renderToString = vdom.renderToString;
+
 const useState = hookController.useState;
 const useEffect = hookController.useEffect;
 const useStore = hookController.useStore;
 
-export { createElement, render, reRender, useState, useEffect, useStore };
+export { createElement, render, renderToString, reRender, useState, useEffect, useStore };

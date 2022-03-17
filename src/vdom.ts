@@ -1,14 +1,16 @@
-import { SUSURU_TEXT_ELEMENT_TYPE } from "./constants";
+import { DEFAULT_APP_ROOT, SUSURU_TEXT_ELEMENT_TYPE } from "./constants";
 import { Fiber, SusuruElement, SusuruElementType } from "./types";
 import Scheduler from './scheduler';
 import HookController from "./hook";
 import { flatArray } from "./utils";
+import SSRDocument, { SSRHtmlElement } from "./ssrDocument";
 
 class VdomController {
 
     private currentRoot: Fiber = null;
     private deletions: Fiber[] = null;
     private scheduler: Scheduler = null;
+    private _document: Document | SSRDocument = document;
     public hookController: HookController = null;
 
     constructor(s: Scheduler, h: HookController) {
@@ -36,26 +38,25 @@ class VdomController {
     // Create a new vdom text node
     private createTextElement = (text?: string | number | undefined | null | boolean): SusuruElement => {
         if ((typeof text !== 'string') && (typeof text !== 'number')) {
-            text = '';
+            text = text ? text.toString() : '';
         }
         return {
             type: SUSURU_TEXT_ELEMENT_TYPE,
             props: {
-                nodeValue: text.toString(),
+                nodeValue: text,
                 children: []
             },
         }
     }
 
     // Create dom element for non-functional fiber
-    private createDomForSimpleFiber = (fiber: Fiber, _document?: Document) => {
-        const __document = _document || document;
+    private createDomForSimpleFiber = (fiber: Fiber) => {
         const isText = fiber.node.type === SUSURU_TEXT_ELEMENT_TYPE;
         if (isText) {
-            const dom = __document.createTextNode(fiber.node.props?.nodeValue || '');
+            const dom = this._document.createTextNode(fiber.node.props?.nodeValue || '');
             return dom;
         } else {
-            const dom = __document.createElement(fiber.node.type as Exclude<SusuruElementType, Function>);
+            const dom = this._document.createElement(fiber.node.type as Exclude<SusuruElementType, Function>);
             this.updateDom(dom, null, fiber.node);
             return dom;
         }
@@ -63,9 +64,9 @@ class VdomController {
 
     private updateFunctionComponent = (fiber: Fiber) => {
         this.hookController.setFunctionComponentFiber(fiber, this.reRender);
-
+        const result = [(fiber.node.type as Function)(fiber.node.props)];
         // Note: Function components do not have dom set here. Therefore in commit stage, need to find parent's dom
-        this.reconcileChildren(fiber, [(fiber.node.type as Function)(fiber.node.props)])
+        this.reconcileChildren(fiber, result)
     }
 
     private updateHostComponent = (fiber: Fiber) => {
@@ -146,8 +147,7 @@ class VdomController {
     }
 
     // Inject props into real dom
-    private updateDom = (dom: HTMLElement | Text, oldNode: SusuruElement | null, newNode: SusuruElement) => {
-
+    private updateDom = (dom: HTMLElement | Text | SSRHtmlElement, oldNode: SusuruElement | null, newNode: SusuruElement) => {
         const isNew = (prev, next) => key =>
             prev[key] !== next[key]
         const isGone = (prev, next) => key => !(key in next)
@@ -217,6 +217,7 @@ class VdomController {
             fiber.effectTag === "PLACEMENT" &&
             fiber.dom != null
         ) {
+            // @ts-ignore
             domParent.appendChild(fiber.dom)
         } else if (
             fiber.effectTag === "UPDATE" &&
@@ -228,14 +229,16 @@ class VdomController {
                 fiber.node
             )
         } else if (fiber.effectTag === "DELETION") {
+            // @ts-ignore
             domParent.removeChild(fiber.dom)
         }
         this.commitWork(fiber.child);
         this.commitWork(fiber.sibling);
     }
 
-    private commitDeletion = (fiber: Fiber, domParent: HTMLElement | Text) => {
+    private commitDeletion = (fiber: Fiber, domParent: HTMLElement | Text | SSRHtmlElement) => {
         if (fiber.dom) {
+            // @ts-ignore
             domParent.removeChild(fiber.dom)
         } else {
             this.commitDeletion(fiber.child, domParent)
@@ -243,7 +246,7 @@ class VdomController {
     }
 
     // render element and mount to container
-    public render = (element?: SusuruElement, container?: HTMLElement, wipRootProvided?: Fiber) => {
+    public render = (element?: SusuruElement, container?: HTMLElement | SSRHtmlElement, wipRootProvided?: Fiber, onTaskFinished?: () => void) => {
         const _wipRoot = wipRootProvided || {
             dom: container,
             node: {
@@ -264,6 +267,7 @@ class VdomController {
                 this.deletions.forEach(this.commitWork);
                 this.commitWork(_wipRoot.child);
                 this.currentRoot = _wipRoot;
+                onTaskFinished && onTaskFinished();
             }
         })
     }
@@ -280,6 +284,25 @@ class VdomController {
         } as Fiber;
         this.render(undefined, undefined, wipRoot);
     }
+
+    public renderToString = async (element?: SusuruElement, containerId?: string, includeRoot?: boolean, timeWait?: number) => new Promise<string>((resolve) => {
+        const ssrDocument = new SSRDocument(containerId || DEFAULT_APP_ROOT);
+        this._document = ssrDocument;
+        this.render(element, this._document.getRoot(), undefined, () => {
+            if (!!timeWait) {
+                setTimeout(() => {
+                    const result = ssrDocument.exportString(includeRoot);
+                    resolve(result);
+                }, timeWait || 0)
+            } else {
+                const result = ssrDocument.exportString(includeRoot);
+                resolve(result);
+            }
+        });
+    }).catch(error => {
+        console.error(error);
+    })
+
 }
 
 export default VdomController;

@@ -1,3 +1,5 @@
+import { SSRHtmlElement } from "./ssrDocument";
+
 export type SusuruText = string;
 export type SusuruElementType = (keyof HTMLElementTagNameMap) | SusuruText | Function
 
@@ -8,7 +10,7 @@ export interface SusuruElement {
 }
 
 export interface Fiber {
-  dom?: HTMLElement | Text
+  dom?: HTMLElement | Text | SSRHtmlElement
   node: SusuruElement
   parent?: Fiber
   sibling?: Fiber
