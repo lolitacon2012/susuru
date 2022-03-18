@@ -1,4 +1,4 @@
-import { DEFAULT_APP_ROOT, SUSURU_TEXT_ELEMENT_TYPE } from "./constants";
+import { DEFAULT_APP_ROOT, SUSURU_TEXT_ELEMENT_TYPE, SUSURU_EMPTY_ELEMENT_TYPE } from "./constants";
 import { Fiber, SusuruElement, SusuruElementType } from "./types";
 import Scheduler from './scheduler';
 import HookController from "./hook";
@@ -28,7 +28,7 @@ class VdomController {
                     if (typeof child === 'object') {
                         return child;
                     } else {
-                        return this.createTextElement(child);
+                        return this.createNakedElement(child);
                     }
                 }),
             },
@@ -36,16 +36,22 @@ class VdomController {
     }
 
     // Create a new vdom text node
-    private createTextElement = (text?: string | number | undefined | null | boolean): SusuruElement => {
+    private createNakedElement = (text?: string | number | undefined | null | boolean): SusuruElement => {
         if ((typeof text !== 'string') && (typeof text !== 'number')) {
-            text = text ? text.toString() : '';
-        }
-        return {
-            type: SUSURU_TEXT_ELEMENT_TYPE,
-            props: {
-                nodeValue: text,
-                children: []
-            },
+            return {
+                type: SUSURU_EMPTY_ELEMENT_TYPE,
+                props: {
+                    children: []
+                },
+            }
+        } else {
+            return {
+                type: SUSURU_TEXT_ELEMENT_TYPE,
+                props: {
+                    nodeValue: text.toString(),
+                    children: []
+                },
+            }
         }
     }
 
@@ -87,17 +93,21 @@ class VdomController {
         }
 
         if (fiber.child) {
-            return () => this.weaveFiber(fiber.child);
+            return () => {
+                return this.weaveFiber(fiber.child)
+            };
         }
         let nextFiber = fiber
         while (nextFiber) {
             if (nextFiber.sibling) {
-                return () => this.weaveFiber(nextFiber.sibling);
+                return () => {
+                    return this.weaveFiber(nextFiber.sibling)
+                }
             }
             nextFiber = nextFiber.parent
         }
 
-        // Nothing left to do, 
+        // Nothing left to do
         return () => { };
     }
 
@@ -110,8 +120,10 @@ class VdomController {
         while ((index < flatElements.length) || !!oldFiber) {
             const element = flatElements[index];
             let newFiber: Fiber = null;
-            const sameType = oldFiber && element && (element.type === oldFiber.node.type);
+            const sameType = oldFiber && element && (element.type === oldFiber.node.type)
+
             if (sameType) {
+                // Update if same type, has element and oldfiber
                 newFiber = {
                     node: element,
                     dom: oldFiber.dom,
@@ -119,8 +131,14 @@ class VdomController {
                     previousState: oldFiber,
                     effectTag: "UPDATE",
                 }
-            }
-            if (element && !sameType) {
+            } else if (oldFiber?.node.type === SUSURU_EMPTY_ELEMENT_TYPE) {
+                // Ignore oldfiber if it was empty.
+                // This means that if a new element is inserted, all elements come next will be deleted and placed again.
+                oldFiber = oldFiber.sibling;
+                continue;
+            } else if (element && !sameType) {
+                // Place new element if it does not have same type with old fiber.
+                // Old fiber will be deleted in the below if statement
                 newFiber = {
                     node: element,
                     dom: null,
@@ -129,6 +147,8 @@ class VdomController {
                     effectTag: "PLACEMENT",
                 }
             }
+
+            // Whenever there is old fiber and not same type, delete old fiber
             if (oldFiber && !sameType) {
                 oldFiber.effectTag = "DELETION";
                 this.deletions.push(oldFiber);
@@ -273,6 +293,7 @@ class VdomController {
     }
 
     public reRender = () => {
+
         if (!this.currentRoot) {
             return;
         }

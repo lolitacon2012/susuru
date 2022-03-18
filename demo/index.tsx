@@ -40,21 +40,15 @@ const Todo = () => {
   const { tasks, newTaskName, isLoading } = store;
 
   Susuru.useEffect(() => {
-    // BUG: if remove settimeout, useEffect has problem
-    // setTimeout(() => {
-      // side effects here, simulate a loading
-      const savedTasks = window.localStorage.getItem(LOCALSTORAGE_KEY) || '';
-      try {
-        const data = JSON.parse(savedTasks);
-        store.tasks = data;
-      } catch (e) {
-        console.log("Failed to load from localStorage, use default tasks.")
-        const data = INITIAL_DATA;
-        store.tasks = data;
-      }
-      store.isLoading = false;
-    // }, 300)
-    console.log('store should have been set.');
+    const savedTasks = window.localStorage.getItem(LOCALSTORAGE_KEY) || '';
+    try {
+      const data = JSON.parse(savedTasks);
+      store.tasks = data;
+    } catch (e) {
+      const data = INITIAL_DATA;
+      store.tasks = data;
+    }
+    store.isLoading = false;
   }, []);
 
   const addNewTask = () => {
@@ -71,15 +65,13 @@ const Todo = () => {
   return (
     <div className={style.app}>
       <h1>{isLoading ? "Loading..." : "Todo List"}</h1>
-      {!isLoading && <h2>hi</h2>}
-      <h3>345</h3>
-      {/* {!isLoading && <div className={style.controllers}>
+      {!isLoading && <div className={style.controllers}>
         <input disabled={isLoading} className={style.newTaskInput} onInput={(e) => {
           store.newTaskName = e.target.value
         }} value={newTaskName} />
         <button className={style.addButton} disabled={!newTaskName || isLoading} onClick={() => addNewTask()}>Add</button>
-      </div>} */}
-      {/* <div className={style.taskList}>
+      </div>}
+      <div className={style.taskList}>
         {tasks.map(t => <Task id={t.id} title={t.title} done={t.done} onClick={(e) => {
           e.preventDefault();
           const newTasks = tasks.map(task => {
@@ -92,22 +84,21 @@ const Todo = () => {
           store.tasks = newTasks;
           localStorage.setItem(LOCALSTORAGE_KEY, JSON.stringify(newTasks));
         }} />)}
-      </div> */}
+      </div>
     </div>
   )
 }
 
-const App = () => {
-  const store = Susuru.useStore({ show: false })
-  return (<div>
-    {store.show && <h1>😅</h1>}
-    <h1 onClick={() => { store.show = !store.show }}>{store.show ? "Hide" : "Show"}</h1>
-  </div>)
-}
+// const App = () => {
+//   const store = Susuru.useStore({ show: false })
+//   return (<div>
+//     {store.show && <h1>😅</h1>}
+//     <h1 onClick={() => { store.show = !store.show }}>{store.show ? "Hide" : "Show"}</h1>
+//   </div>)
+// }
 
-Susuru.render(<Todo />, document.getElementById("root"));
+// Susuru.render(<Todo />, document.getElementById("root"));
 // Susuru.render(<App />, document.getElementById("root"));
-// (Susuru.renderToString(<Todo />, 'root', false, 5).then(res => {
-//   console.log(res)
-//   document.getElementById('root').innerHTML = res || 'error';
-// }));
+(Susuru.renderToString(<Todo />, 'root', false).then(res => {
+  document.getElementById('root').innerHTML = res || 'error';
+}));

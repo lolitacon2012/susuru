@@ -9,7 +9,7 @@ const proxyHandlerFactory = (
     const handler = {
         set: function (obj, prop, value) {
             // setNeedReRender(obj[prop] !== value);
-            obj[prop] !== value && reRender();
+            (obj[prop] !== value) && reRender();
             if ((typeof value === 'object') && (value !== null)) {
                 value = proxifyObject(value, handler)
             }
@@ -58,8 +58,11 @@ class HookController {
         const oldDependencies = oldHook?.dependencies || [];
         const newDependencies = dependencies || [];
         if (!oldHook || newDependencies.some((d, i) => d !== oldDependencies[i])) {
-            const onUnmount = effect();
-            hook.onUnmount = onUnmount instanceof Function ? onUnmount : NOOP;
+            // useEffect should execute after render
+            setTimeout(() => {
+                const onUnmount = effect();
+                hook.onUnmount = onUnmount instanceof Function ? onUnmount : NOOP;
+            })
         }
         this.wipFiber.hooks.push(hook)
         this.hookIndex++;
@@ -69,7 +72,9 @@ class HookController {
         const oldHook = this.wipFiber?.previousState?.hooks?.[this.hookIndex] as StoreHook<T>;
         let initialStore: ProxyHandler<T>;
         if (!oldHook?.store) {
-            initialStore = new Proxy<T>(initialStoreObject, proxyHandlerFactory(this.onTriggerRender));
+            initialStore = new Proxy<T>(initialStoreObject, proxyHandlerFactory(() => {
+                this.onTriggerRender()
+            }));
         }
         const hook = {
             store: oldHook ? oldHook.store : initialStore

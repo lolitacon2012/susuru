@@ -2,13 +2,15 @@ DONE
 - implement useEffect
 - add hook types
 - add useStore with proxy
-- Server side rendering
+- Server side rendering initial state
+- fix insert child wrong order problem
 
 DOING
-- fix insert child wrong order problem
-- Fix useStore bug
+- new scheduler
 
 TODO
+- Improve performance of updating view
+- Server side rendering + hydration
 - clean up all constants
 - clean up tree comparision algo
 - try useSyncState
