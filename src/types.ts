@@ -6,7 +6,8 @@ export type SusuruElementType = (keyof HTMLElementTagNameMap) | SusuruText | Fun
 export interface SusuruElement {
   type: SusuruElementType
   props: Record<string, any> & { children?: SusuruElement[] }
-  key?: string
+  key?: string,
+  counterId: number,
 }
 
 export interface Fiber {

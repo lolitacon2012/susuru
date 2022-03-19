@@ -4,9 +4,11 @@ DONE
 - add useStore with proxy
 - Server side rendering initial state
 - fix insert child wrong order problem
+- Remove node is not working correctly
 
 DOING
 - new scheduler
+
 
 TODO
 - Improve performance of updating view

@@ -12,15 +12,21 @@ class VdomController {
     private scheduler: Scheduler = null;
     private _document: Document | SSRDocument = document;
     public hookController: HookController = null;
+    // private vnodes: Map<number, SusuruElement> = undefined;
+    private counter: number = undefined;
 
     constructor(s: Scheduler, h: HookController) {
         this.scheduler = s;
         this.hookController = h;
+        // this.vnodes = new Map();
+        this.counter = new Date().getTime();
     }
 
     // Create a new vdom node
     public createElement = (type: SusuruElementType, props: any, ...children: SusuruElement[]): SusuruElement => {
-        return {
+        this.counter += 1;
+        const counterId = this.counter;
+        const result = {
             type,
             props: {
                 ...props,
@@ -32,27 +38,37 @@ class VdomController {
                     }
                 }),
             },
+            counterId
         }
+        // this.vnodes.set(counterId, result);
+        return result;
     }
 
     // Create a new vdom text node
     private createNakedElement = (text?: string | number | undefined | null | boolean): SusuruElement => {
+        this.counter += 1;
+        const counterId = this.counter;
+        let result: SusuruElement;
         if ((typeof text !== 'string') && (typeof text !== 'number')) {
-            return {
+            result = {
                 type: SUSURU_EMPTY_ELEMENT_TYPE,
                 props: {
                     children: []
                 },
+                counterId
             }
         } else {
-            return {
+            result = {
                 type: SUSURU_TEXT_ELEMENT_TYPE,
                 props: {
                     nodeValue: text.toString(),
                     children: []
                 },
+                counterId
             }
         }
+        // this.vnodes.set(counterId, result);
+        return result;
     }
 
     // Create dom element for non-functional fiber
@@ -121,7 +137,6 @@ class VdomController {
             const element = flatElements[index];
             let newFiber: Fiber = null;
             const sameType = oldFiber && element && (element.type === oldFiber.node.type)
-
             if (sameType) {
                 // Update if same type, has element and oldfiber
                 newFiber = {
@@ -152,7 +167,9 @@ class VdomController {
             if (oldFiber && !sameType) {
                 oldFiber.effectTag = "DELETION";
                 this.deletions.push(oldFiber);
+                newFiber = oldFiber.sibling;
             }
+
             if (oldFiber) {
                 oldFiber = oldFiber.sibling
             }
@@ -250,8 +267,11 @@ class VdomController {
             )
         } else if (fiber.effectTag === "DELETION") {
             // @ts-ignore
-            domParent.removeChild(fiber.dom)
+            this.commitDeletion(fiber, domParent)
+            // this.vnodes.delete(fiber.node.counterId)
         }
+        // Clear effect tag after executing
+        delete fiber.effectTag;
         this.commitWork(fiber.child);
         this.commitWork(fiber.sibling);
     }
@@ -288,6 +308,7 @@ class VdomController {
                 this.commitWork(_wipRoot.child);
                 this.currentRoot = _wipRoot;
                 onTaskFinished && onTaskFinished();
+                // console.log(this.vnodes)
             }
         })
     }

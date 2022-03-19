@@ -74,13 +74,7 @@ const Todo = () => {
       <div className={style.taskList}>
         {tasks.map(t => <Task id={t.id} title={t.title} done={t.done} onClick={(e) => {
           e.preventDefault();
-          const newTasks = tasks.map(task => {
-            if (task.id === t.id) {
-              return { ...task, done: !task.done }
-            } else {
-              return task;
-            }
-          });
+          const newTasks = tasks.filter(task => task.id !== t.id);
           store.tasks = newTasks;
           localStorage.setItem(LOCALSTORAGE_KEY, JSON.stringify(newTasks));
         }} />)}
@@ -97,8 +91,8 @@ const Todo = () => {
 //   </div>)
 // }
 
-// Susuru.render(<Todo />, document.getElementById("root"));
+Susuru.render(<Todo />, document.getElementById("root"));
 // Susuru.render(<App />, document.getElementById("root"));
-(Susuru.renderToString(<Todo />, 'root', false).then(res => {
-  document.getElementById('root').innerHTML = res || 'error';
-}));
+// (Susuru.renderToString(<Todo />, 'root', false).then(res => {
+//   document.getElementById('root').innerHTML = res || 'error';
+// }));
