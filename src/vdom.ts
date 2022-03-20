@@ -77,10 +77,12 @@ class VdomController {
         if (isText) {
             const dom = this._document.createTextNode(fiber.node.props?.nodeValue || '');
             return dom;
-        } else {
+        } else if(fiber.node.type !== SUSURU_EMPTY_ELEMENT_TYPE) {
             const dom = this._document.createElement(fiber.node.type as Exclude<SusuruElementType, Function>);
             this.updateDom(dom, null, fiber.node);
             return dom;
+        } else {
+            return null;
         }
     }
 

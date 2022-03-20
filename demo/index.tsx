@@ -21,7 +21,7 @@ const Task = (props: TaskProps) => {
 
 const INITIAL_DATA = [
   { id: 'task-1', done: false, title: "Watch movies" },
-  { id: 'task-2', done: true, title: "Learn React" },
+  { id: 'task-2', done: false, title: "Learn React" },
   { id: 'task-3', done: false, title: "Build a better world" },
 ]
 
