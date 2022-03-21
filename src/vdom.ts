@@ -3,7 +3,7 @@ import { Fiber, SusuruElement, SusuruElementType } from "./types";
 import Scheduler from './scheduler';
 import HookController from "./hook";
 import { flatArray } from "./utils";
-import SSRDocument, { SSRHtmlElement } from "./ssrDocument";
+import SSRDocument, { SSRHtmlElement, SSR_PREFIX, SSR_ROOT_HYDRATION_ID } from "./ssrDocument";
 
 class VdomController {
 
@@ -13,19 +13,18 @@ class VdomController {
     private _document: Document | SSRDocument = document;
     public hookController: HookController = null;
     // private vnodes: Map<number, SusuruElement> = undefined;
-    private counter: number = undefined;
+    private domCounter: number = undefined;
+    private hydration: boolean = undefined;
 
     constructor(s: Scheduler, h: HookController) {
         this.scheduler = s;
         this.hookController = h;
         // this.vnodes = new Map();
-        this.counter = new Date().getTime();
+        this.domCounter = 0;
     }
 
     // Create a new vdom node
     public createElement = (type: SusuruElementType, props: any, ...children: SusuruElement[]): SusuruElement => {
-        this.counter += 1;
-        const counterId = this.counter;
         const result = {
             type,
             props: {
@@ -37,25 +36,20 @@ class VdomController {
                         return this.createNakedElement(child);
                     }
                 }),
-            },
-            counterId
+            }
         }
-        // this.vnodes.set(counterId, result);
         return result;
     }
 
     // Create a new vdom text node
     private createNakedElement = (text?: string | number | undefined | null | boolean): SusuruElement => {
-        this.counter += 1;
-        const counterId = this.counter;
         let result: SusuruElement;
         if ((typeof text !== 'string') && (typeof text !== 'number')) {
             result = {
                 type: SUSURU_EMPTY_ELEMENT_TYPE,
                 props: {
                     children: []
-                },
-                counterId
+                }
             }
         } else {
             result = {
@@ -63,11 +57,9 @@ class VdomController {
                 props: {
                     nodeValue: text.toString(),
                     children: []
-                },
-                counterId
+                }
             }
         }
-        // this.vnodes.set(counterId, result);
         return result;
     }
 
@@ -75,10 +67,28 @@ class VdomController {
     private createDomForSimpleFiber = (fiber: Fiber) => {
         const isText = fiber.node.type === SUSURU_TEXT_ELEMENT_TYPE;
         if (isText) {
-            const dom = this._document.createTextNode(fiber.node.props?.nodeValue || '');
-            return dom;
-        } else if(fiber.node.type !== SUSURU_EMPTY_ELEMENT_TYPE) {
-            const dom = this._document.createElement(fiber.node.type as Exclude<SusuruElementType, Function>);
+            this.domCounter += 1;
+            if (this.hydration) {
+                // This should only happen on client side rendering
+                const domHydrationId = SSR_PREFIX + this.domCounter;
+                const textNodeIterator = document.createNodeIterator(fiber.parent.dom as HTMLElement, NodeFilter.SHOW_COMMENT);
+                let curNode;
+                while (curNode = textNodeIterator.nextNode()) {
+                    if (curNode.nodeValue?.trim() === domHydrationId.trim()) {
+                        const dom = curNode.nextSibling;
+                        curNode.remove();
+                        return dom;
+                    }
+                }
+                return null;
+            } else {
+                const dom = this._document.createTextNode(fiber.node.props?.nodeValue || '');
+                return dom;
+            }
+        } else if (fiber.node.type !== SUSURU_EMPTY_ELEMENT_TYPE) {
+            this.domCounter += 1;
+            const domHydrationId = SSR_PREFIX + this.domCounter;
+            const dom = this.hydration ? document.querySelector(`[data-hydration-id='${domHydrationId}']`) as HTMLElement : this._document.createElement(fiber.node.type as Exclude<SusuruElementType, Function>);
             this.updateDom(dom, null, fiber.node);
             return dom;
         } else {
@@ -270,7 +280,6 @@ class VdomController {
         } else if (fiber.effectTag === "DELETION") {
             // @ts-ignore
             this.commitDeletion(fiber, domParent)
-            // this.vnodes.delete(fiber.node.counterId)
         }
         // Clear effect tag after executing
         delete fiber.effectTag;
@@ -299,6 +308,9 @@ class VdomController {
             isRoot: true,
             previousState: this.currentRoot
         } as Fiber;
+
+        (this.hydration === undefined) && (this.hydration = container?.dataset?.['hydrationId'] === SSR_ROOT_HYDRATION_ID);
+
         this.deletions = [];
         this.scheduler.setNextUnitOfWork(() => {
             return this.weaveFiber(_wipRoot)
@@ -310,13 +322,12 @@ class VdomController {
                 this.commitWork(_wipRoot.child);
                 this.currentRoot = _wipRoot;
                 onTaskFinished && onTaskFinished();
-                // console.log(this.vnodes)
+                this.hydration = false
             }
         })
     }
 
     public reRender = () => {
-
         if (!this.currentRoot) {
             return;
         }
@@ -330,21 +341,26 @@ class VdomController {
     }
 
     public renderToString = async (element?: SusuruElement, containerId?: string, includeRoot?: boolean, timeWait?: number) => new Promise<string>((resolve) => {
-        const ssrDocument = new SSRDocument(containerId || DEFAULT_APP_ROOT);
-        this._document = ssrDocument;
+        const ssrDocument = new SSRDocument(containerId || DEFAULT_APP_ROOT); // remember to remove
+        this._document = ssrDocument; // remember to remove
         this.render(element, this._document.getRoot(), undefined, () => {
             if (!!timeWait) {
                 setTimeout(() => {
                     const result = ssrDocument.exportString(includeRoot);
                     resolve(result);
+                    console.log(result);
                 }, timeWait || 0)
             } else {
                 const result = ssrDocument.exportString(includeRoot);
+                console.log(result);
                 resolve(result);
             }
+
         });
     }).catch(error => {
         console.error(error);
+    }).finally(() => {
+        this._document = document; // remember to remove
     })
 
 }

@@ -64,7 +64,7 @@ const Todo = () => {
 
   return (
     <div className={style.app}>
-      <h1>{isLoading ? "Loading..." : "Todo List"}</h1>
+      <h1>{isLoading ? "Loading..." : "Todo List"} + {isLoading ? "Loading..." : "Todo List"} ++ {isLoading ? <span>A</span> : <span>b</span>}</h1>
       {!isLoading && <div className={style.controllers}>
         <input disabled={isLoading} className={style.newTaskInput} onInput={(e) => {
           store.newTaskName = e.target.value
@@ -91,8 +91,9 @@ const Todo = () => {
 //   </div>)
 // }
 
-Susuru.render(<Todo />, document.getElementById("root"));
+// Susuru.render(<Todo />, document.getElementById("root"));
 // Susuru.render(<App />, document.getElementById("root"));
-// (Susuru.renderToString(<Todo />, 'root', false).then(res => {
-//   document.getElementById('root').innerHTML = res || 'error';
-// }));
+(Susuru.renderToString(<Todo />, 'root', true).then(res => {
+  document.getElementById('root').innerHTML = res || 'error';
+}));
+// Susuru.render(<Todo />, document.getElementById("root"));

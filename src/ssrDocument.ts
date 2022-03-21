@@ -1,9 +1,8 @@
-import { v4 as uuid } from 'uuid';
 import { DEFAULT_APP_ROOT } from './constants';
 
-const SSR_PREFIX = "__SSR_";
-const SSR_ROOT_HYDRATION_ID = "__SSR_ROOT"
-const SSR_TEXT_TYPE = "_text";
+export const SSR_PREFIX = "__SSR_";
+export const SSR_ROOT_HYDRATION_ID = "__SSR_ROOT"
+export const SSR_TEXT_TYPE = "_text";
 const HTML_ATTRIBUTE_NAME_CONVENSION = {
     "classname": "class"
 }
@@ -69,6 +68,7 @@ const addEventListener = () => {
 
 class SSRDocument {
     private domRoot: SSRHtmlElement;
+    private domCounter: number;
     constructor(rootId?: string) {
         this.domRoot = {
             __internal: {
@@ -84,6 +84,7 @@ class SSRDocument {
             removeChild,
             id: rootId || DEFAULT_APP_ROOT
         }
+        this.domCounter = 0;
     }
     public getRoot = () => this.domRoot;
     public createTextNode = (text: string): SSRHtmlElement => {
@@ -92,9 +93,10 @@ class SSRDocument {
         return dom;
     }
     public createElement = (type: string): SSRHtmlElement => {
+        this.domCounter = this.domCounter + 1;
         return {
             __internal: {
-                hydrationId: SSR_PREFIX + uuid(),
+                hydrationId: SSR_PREFIX + this.domCounter,
                 type,
                 parent: undefined,
                 children: []
@@ -113,7 +115,8 @@ class SSRDocument {
     private renderSSRDom = (ssrDom: SSRHtmlElement) => {
         const type = ssrDom.__internal.type;
         if (ssrDom.__internal.type === SSR_TEXT_TYPE) {
-            return ssrDom.nodeValue;
+            // https://lihautan.com/hydrating-text-content/#is-this-a-bug
+            return `<!-- ${ssrDom.__internal.hydrationId} -->${ssrDom.nodeValue}`;
         } else {
             const childString = ssrDom.__internal.children.map(c => this.renderSSRDom(c)).join('');
             if (ssrDom.__internal.isRoot) {

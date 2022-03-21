@@ -5,9 +5,10 @@ export type SusuruElementType = (keyof HTMLElementTagNameMap) | SusuruText | Fun
 
 export interface SusuruElement {
   type: SusuruElementType
-  props: Record<string, any> & { children?: SusuruElement[] }
-  key?: string,
-  counterId: number,
+  props: Record<string, any> & { 
+    children?: SusuruElement[],
+  }
+  key?: string // a text node must have key, created automatically by vdom
 }
 
 export interface Fiber {
