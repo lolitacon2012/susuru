@@ -35,4 +35,5 @@ export type EffectHook = {
 }
 export type StoreHook<T extends object> = {
   store: ProxyHandler<T>,
+  onServerRenderingExecuted: boolean,
 }

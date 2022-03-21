@@ -1,6 +1,6 @@
 import { NOOP } from "./constants";
 import { EffectHook, Fiber, StateHook, StoreHook } from "./types";
-import { proxifyObject } from "./utils";
+import { isServer, proxifyObject } from "./utils";
 
 const proxyHandlerFactory = (
     reRender: () => void
@@ -23,13 +23,19 @@ const proxyHandlerFactory = (
 class HookController {
     private hookIndex: number = null;
     private wipFiber: Fiber = null;
-    private onTriggerRender: () => void;
+    private onTriggerRender: (cb?: () => void) => Promise<void>;
+    private pendingUseStoreServerCallbackCounter: number = 0;
+    private onUseStoreServerCallbackFinished: () => void;
+    // public reset = () => {}
 
-    public setFunctionComponentFiber = (wipFiber: Fiber, onTriggerRender: () => void) => {
+    public setFunctionComponentFiber = (wipFiber: Fiber, onTriggerRender: (cb?: () => void) => Promise<void>) => {
         this.wipFiber = wipFiber;
         this.wipFiber.hooks = [];
         this.hookIndex = 0;
         this.onTriggerRender = onTriggerRender;
+    }
+    public setOnUseStoreServerCallbackFinished = (callback: () => void) => {
+        this.onUseStoreServerCallbackFinished = callback;
     }
     public useState = <T>(initialState: T): [T, (s: T) => void] => {
         const oldHook = this.wipFiber?.previousState?.hooks?.[this.hookIndex] as StateHook<T>;
@@ -50,6 +56,10 @@ class HookController {
         return [hook.state, setState]
     }
     public useEffect = (effect?: (() => () => void) | (() => void), dependencies?: any[]): void => {
+        // useEffect is ignore on server side rendering
+        if (isServer) {
+            return;
+        }
         const oldHook = this.wipFiber?.previousState?.hooks?.[this.hookIndex] as EffectHook;
         const hook = {
             ...oldHook,
@@ -68,7 +78,7 @@ class HookController {
         this.hookIndex++;
     }
     // TODO: better handle of nested object types
-    public useStore = <T extends Record<string | number, any>>(initialStoreObject: T): T => {
+    public useStore = <T extends Record<string | number, any>>(initialStoreObject: T): { store: T, onServerRendering: (asyncCallback: () => Promise<void>) => void } => {
         const oldHook = this.wipFiber?.previousState?.hooks?.[this.hookIndex] as StoreHook<T>;
         let initialStore: ProxyHandler<T>;
         if (!oldHook?.store) {
@@ -77,11 +87,30 @@ class HookController {
             }));
         }
         const hook = {
-            store: oldHook ? oldHook.store : initialStore
+            store: oldHook ? oldHook.store : initialStore,
+            onServerRenderingExecuted: !!oldHook?.onServerRenderingExecuted
         };
         this.wipFiber.hooks.push(hook)
         this.hookIndex++
-        return hook.store as T;
+        // onServerRendering should only execute once
+        const onServerRendering = (asyncCallback: () => Promise<void>) => {
+            if (isServer && !hook.onServerRenderingExecuted) {
+                this.pendingUseStoreServerCallbackCounter = this.pendingUseStoreServerCallbackCounter + 1;
+                hook.onServerRenderingExecuted = true;
+                asyncCallback().then(() => {
+                }).catch(err => {
+                    console.error(err);
+                }).finally(() => {
+                    this.pendingUseStoreServerCallbackCounter = this.pendingUseStoreServerCallbackCounter - 1;
+                    if (this.pendingUseStoreServerCallbackCounter === 0) {
+                        this.onTriggerRender().then(() => {
+                            this.onUseStoreServerCallbackFinished && this.onUseStoreServerCallbackFinished();
+                        })
+                    }
+                })
+            }
+        }
+        return { store: hook.store as T, onServerRendering };
     }
 }
 

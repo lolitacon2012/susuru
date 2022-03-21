@@ -11,6 +11,7 @@ const vdom = new VdomController(scheduler, hookController);
 const createElement = vdom.createElement;
 const render = vdom.render;
 const reRender = vdom.reRender;
+const resetVdom = vdom.reset;
 
 const renderToString = vdom.renderToString;
 
@@ -18,4 +19,4 @@ const useState = hookController.useState;
 const useEffect = hookController.useEffect;
 const useStore = hookController.useStore;
 
-export { createElement, render, renderToString, reRender, useState, useEffect, useStore };
+export { createElement, render, renderToString, reRender, resetVdom, useState, useEffect, useStore };

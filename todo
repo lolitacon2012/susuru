@@ -6,10 +6,11 @@ DONE
 - fix insert child wrong order problem
 - Remove node is not working correctly
 - Server side rendering: hydration DOM
+- Server side rendering: hydration hook & useStore data
 
 DOING
 - new scheduler
-- Server side rendering: hydration hook & useStore data
+- Server side rendering: data hydration
 
 
 TODO

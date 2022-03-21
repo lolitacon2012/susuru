@@ -59,11 +59,11 @@ const removeChild = function (this: SSRHtmlElement, child: SSRHtmlElement) {
 
 // dummy methods
 const removeEventListener = () => {
-    console.log('removeEventListener is ignored in server-side rendering.')
+    // console.log('removeEventListener is ignored in server-side rendering.')
 }
 
 const addEventListener = () => {
-    console.log('addEventListener is ignored in server-side rendering.')
+    // console.log('addEventListener is ignored in server-side rendering.')
 }
 
 class SSRDocument {
@@ -130,12 +130,8 @@ class SSRDocument {
         }
     }
 
-    public exportString = (includeRoot?: boolean) => {
-        if (includeRoot) {
-            return `<div id="${this.getRoot()['id']}" data-hydration-id="${this.getRoot().__internal.hydrationId}">${this.renderSSRDom(this.getRoot())}</div>`
-        } else {
-            return this.renderSSRDom(this.getRoot());
-        }
+    public exportString = () => {
+        return `<!-- ${this.getRoot().__internal.hydrationId} -->${this.renderSSRDom(this.getRoot())}`;
     }
 }
 

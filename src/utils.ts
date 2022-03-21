@@ -30,4 +30,6 @@ const proxifyObject = (obj, handler) => {
         return obj;
     }
 }
-export { debugLog, flatArray, className, proxifyObject };
+
+const isServer = !window;
+export { debugLog, flatArray, className, proxifyObject, isServer };

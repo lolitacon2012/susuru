@@ -19,12 +19,20 @@ class VdomController {
     constructor(s: Scheduler, h: HookController) {
         this.scheduler = s;
         this.hookController = h;
-        // this.vnodes = new Map();
+        this.reset();
+    }
+
+    public reset = () => {
+        this.scheduler.reset();
+        this.currentRoot = null;
+        this.deletions = null;
+        this.hydration = undefined;
         this.domCounter = 0;
     }
 
     // Create a new vdom node
     public createElement = (type: SusuruElementType, props: any, ...children: SusuruElement[]): SusuruElement => {
+
         const result = {
             type,
             props: {
@@ -65,7 +73,7 @@ class VdomController {
 
     // Create dom element for non-functional fiber
     private createDomForSimpleFiber = (fiber: Fiber) => {
-        const isText = fiber.node.type === SUSURU_TEXT_ELEMENT_TYPE;
+        const isText = (fiber.node.type === SUSURU_TEXT_ELEMENT_TYPE);
         if (isText) {
             this.domCounter += 1;
             if (this.hydration) {
@@ -76,7 +84,6 @@ class VdomController {
                 while (curNode = textNodeIterator.nextNode()) {
                     if (curNode.nodeValue?.trim() === domHydrationId.trim()) {
                         const dom = curNode.nextSibling;
-                        curNode.remove();
                         return dom;
                     }
                 }
@@ -308,8 +315,7 @@ class VdomController {
             isRoot: true,
             previousState: this.currentRoot
         } as Fiber;
-
-        (this.hydration === undefined) && (this.hydration = container?.dataset?.['hydrationId'] === SSR_ROOT_HYDRATION_ID);
+        (this.hydration === undefined) && (this.hydration = (container?.childNodes?.[0]?.nodeValue?.trim() === SSR_ROOT_HYDRATION_ID));
 
         this.deletions = [];
         this.scheduler.setNextUnitOfWork(() => {
@@ -327,34 +333,32 @@ class VdomController {
         })
     }
 
-    public reRender = () => {
-        if (!this.currentRoot) {
-            return;
-        }
-        const wipRoot = {
-            dom: this.currentRoot.dom,
-            node: this.currentRoot.node,
-            isRoot: true,
-            previousState: this.currentRoot
-        } as Fiber;
-        this.render(undefined, undefined, wipRoot);
+    public reRender = (onTaskFinished?: () => void): Promise<void> => {
+        return new Promise((resolve) => {
+            if (!this.currentRoot) {
+                resolve()
+            }
+            const wipRoot = {
+                dom: this.currentRoot.dom,
+                node: this.currentRoot.node,
+                isRoot: true,
+                previousState: this.currentRoot
+            } as Fiber;
+            this.render(undefined, undefined, wipRoot, () => {
+                onTaskFinished && onTaskFinished();
+                resolve();
+            });
+        })
     }
 
-    public renderToString = async (element?: SusuruElement, containerId?: string, includeRoot?: boolean, timeWait?: number) => new Promise<string>((resolve) => {
+    public renderToString = async (element: SusuruElement, containerId: string) => new Promise<string>((resolve) => {
         const ssrDocument = new SSRDocument(containerId || DEFAULT_APP_ROOT); // remember to remove
         this._document = ssrDocument; // remember to remove
+        this.hookController.setOnUseStoreServerCallbackFinished(() => {
+            const result = ssrDocument.exportString();
+            resolve(result);
+        })
         this.render(element, this._document.getRoot(), undefined, () => {
-            if (!!timeWait) {
-                setTimeout(() => {
-                    const result = ssrDocument.exportString(includeRoot);
-                    resolve(result);
-                    console.log(result);
-                }, timeWait || 0)
-            } else {
-                const result = ssrDocument.exportString(includeRoot);
-                console.log(result);
-                resolve(result);
-            }
 
         });
     }).catch(error => {
