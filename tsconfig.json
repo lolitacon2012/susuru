@@ -22,5 +22,5 @@
   ],
   "include": [
     "src", "demo/index.module.css"
-  ]
+, "global.d.ts"  ]
 }

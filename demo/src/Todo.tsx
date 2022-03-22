@@ -1,5 +1,4 @@
-import { Susuru, createElement } from '../src/index';
-import { isServer } from '../src/utils';
+import { Susuru, createElement } from '../../src/index';
 import style from './index.module.css';
 
 interface TaskProps {
@@ -26,24 +25,26 @@ const INITIAL_DATA = [
     { id: 'task-3', done: false, title: "Build a better world" },
 ]
 
-const Todo = ({ id, loadTime }: { id: string, loadTime: number }) => {
-    const LOCALSTORAGE_KEY = 'susuru-saved-tasks-' + id;
+const Todo = () => {
+    const LOCALSTORAGE_KEY = 'susuru-saved-tasks';
     const { store, onServerRendering } = Susuru.useStore({
         tasks: [] as Task[],
         newTaskName: "",
         isLoading: true,
-        randomNumber: 0,
+        serverCpuInfo: "",
     });
 
     onServerRendering(async () => {
-        const data = await new Promise((resolve) => {
-            setTimeout(() => {
-                const data = Math.random();
-                resolve(data)
-            }, loadTime)
-        })
-        store.randomNumber = data as number;
-        console.log(store.randomNumber + ' - ' + id);
+        // This should only execute on server side.
+        const si = await import('systeminformation')
+        const { manufacturer, brand } = await si.cpu();
+        store.serverCpuInfo = manufacturer + ' - ' + brand;
+
+        // You can return the entire store here, or just return partial data.
+        // Partial data will be shallowly copied into client side store when initialized.
+        return {
+            serverCpuInfo: manufacturer + ' - ' + brand
+        };
     })
 
     Susuru.useEffect(() => {
@@ -71,10 +72,8 @@ const Todo = ({ id, loadTime }: { id: string, loadTime: number }) => {
     }
     return (
         <div className={style.app}>
-            <h1>{store.isLoading ? "Loading..." : `Todo List ${id}`}</h1>
-            <p onClick={()=>{
-                store.randomNumber = store.randomNumber + 1;
-            }}>Secret: {store.randomNumber || 'unknown'}</p>
+            <h2>{store.isLoading ? "Loading..." : `Todo List`}</h2>
+            <span>Server CPU: {store.serverCpuInfo}</span>
             {!store.isLoading && <div className={style.controllers}>
                 <input disabled={store.isLoading} className={style.newTaskInput} onInput={(e) => {
                     store.newTaskName = e.target.value

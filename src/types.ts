@@ -8,7 +8,7 @@ export interface SusuruElement {
   props: Record<string, any> & { 
     children?: SusuruElement[],
   }
-  key?: string // a text node must have key, created automatically by vdom
+  key?: string
 }
 
 export interface Fiber {
@@ -34,6 +34,7 @@ export type EffectHook = {
   dependencies: any[]
 }
 export type StoreHook<T extends object> = {
+  id: number,
   store: ProxyHandler<T>,
   onServerRenderingExecuted: boolean,
 }

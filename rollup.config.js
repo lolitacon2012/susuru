@@ -2,13 +2,13 @@ import { terser } from 'rollup-plugin-terser'
 import typescript from 'rollup-plugin-typescript2'
 import size from 'rollup-plugin-size'
 import { nodeResolve } from '@rollup/plugin-node-resolve';
-// import commonjs from '@rollup/plugin-commonjs';
+import commonjs from '@rollup/plugin-commonjs';
 // import json from '@rollup/plugin-json'
 // import nodePolyfills from 'rollup-plugin-polyfill-node';
 
 const plugins = [
   // json(),
-  // commonjs(),
+  commonjs(),
   nodeResolve(),
   // nodePolyfills(),
   typescript({

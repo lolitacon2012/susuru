@@ -351,22 +351,31 @@ class VdomController {
         })
     }
 
-    public renderToString = async (element: SusuruElement, containerId: string) => new Promise<string>((resolve) => {
+    public renderToString = async (element: SusuruElement, containerId: string) => new Promise<{
+        htmlString: string,
+        dataScript: string
+    }>((resolve) => {
         const ssrDocument = new SSRDocument(containerId || DEFAULT_APP_ROOT); // remember to remove
         this._document = ssrDocument; // remember to remove
-        this.hookController.setOnUseStoreServerCallbackFinished(() => {
-            const result = ssrDocument.exportString();
-            resolve(result);
+        this.hookController.setOnUseStoreServerCallbackFinished((storeData) => {
+            const htmlString = ssrDocument.exportString();
+            const dataScript = `<script>window.__ssr__ = '${JSON.stringify(storeData)}'</script>`;
+            resolve({
+                htmlString,
+                dataScript
+            });
         })
-        this.render(element, this._document.getRoot(), undefined, () => {
-
-        });
+        this.render(element, this._document.getRoot(), undefined, () => { });
     }).catch(error => {
         console.error(error);
+        Promise.reject({
+            htmlString: '',
+            dataScript: ''
+        });
     }).finally(() => {
         this._document = document; // remember to remove
+        this.reset();
     })
-
 }
 
 export default VdomController;

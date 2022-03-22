@@ -11,9 +11,12 @@ DONE
 DOING
 - new scheduler
 - Server side rendering: data hydration
-
+- make project monorepo, separate demo and susuru
+- make a working prod build
 
 TODO
+- Fix <br> issue
+- Support fragment
 - Improve performance of updating view
 - Server side rendering: hydration
 - clean up all constants

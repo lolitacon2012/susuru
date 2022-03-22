@@ -18,7 +18,7 @@ const className = (classNames: string[]) => {
     return classNames.filter(c => !!c).join(' ');
 }
 
-// convert an object to proxy recursively
+// Convert an object to proxy recursively
 const proxifyObject = (obj, handler) => {
     if ((typeof obj === 'object') && (obj !== null)) {
         const proxified = Array.isArray(obj) ? [] : {};
@@ -31,5 +31,24 @@ const proxifyObject = (obj, handler) => {
     }
 }
 
+// Create a proxy handler with onValueChanged callback.
+// onValueChanged is called when value actually changed.
+// If an object is set as value, proxify it.
+const proxyHandlerFactory = (
+    onValueChanged: () => void
+) => {
+    const handler = {
+        set: function (obj, prop, value) {
+            (obj[prop] !== value) && onValueChanged();
+            if ((typeof value === 'object') && (value !== null)) {
+                value = proxifyObject(value, handler)
+            }
+            obj[prop] = value;
+            return true;
+        }
+    }
+    return handler;
+};
+
 const isServer = !window;
-export { debugLog, flatArray, className, proxifyObject, isServer };
+export { debugLog, flatArray, className, proxifyObject, proxyHandlerFactory, isServer };
