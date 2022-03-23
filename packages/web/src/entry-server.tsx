@@ -1,15 +1,11 @@
 import { Susuru, createElement } from 'susuru';
-import App from './App';
+import App from './pages';
 
 export const render = async (url, context) => {
-  // console.log({
-  //   url, context
-  // })
   Susuru.resetVdom();
   const renderResult = await Susuru.renderToString(
-    <App />, 'root'
+    <App path={url} />, 'root',
   );
-  
   // @ts-ignore
   const htmlString = renderResult.htmlString || '';
   // @ts-ignore

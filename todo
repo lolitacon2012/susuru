@@ -14,8 +14,12 @@ DONE
 DOING
 - new scheduler
 - homepage
+- routing
+- fix routing switch flashing
+- fix: when no store is used and no onServerRendering is called, render string wont return. Maybe can use promise.all to solve this issue.
 
 TODO
+- Execute onUnmount on unmounted
 - Support svg and path
 - Support fragment
 - Support inline styles

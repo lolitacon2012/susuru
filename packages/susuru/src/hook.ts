@@ -1,5 +1,5 @@
 import { NOOP } from "./constants";
-import { EffectHook, Fiber, StateHook, StoreHook } from "./types";
+import { EffectHook, Fiber, StateHook, StoreHook, RouterRegisterHook } from "./types";
 import { isServer, proxyHandlerFactory } from "./utils";
 import lodashMerge from 'lodash.merge';
 
@@ -14,7 +14,7 @@ class StatefulHookController {
     private pendingUseStoreServerCallbackCounter: number = 0;
     private onUseStoreServerCallbackFinished: (storeData: ServerSideStoreHydrationData) => void;
     private serverSideStoreHydrationData: ServerSideStoreHydrationData = {}; // Used both on server side and client side. key: store hook id, value: store data
- 
+    private switchComponent: Function;
     // store counter. This value is global, which makes hook controller stateful.
     private storeCounter: number = undefined;
 
@@ -90,7 +90,7 @@ class StatefulHookController {
         this.wipFiber.hooks.push(hook)
         this.hookIndex++;
     }
-    // TODO: better handle of nested object types
+
     public useStore = <T extends Record<string | number, any>>(initialStoreObject: T): { store: T, onServerRendering: (asyncCallback: () => Promise<Partial<T>>) => void } => {
         const oldHook = this.wipFiber?.previousState?.hooks?.[this.hookIndex] as StoreHook<T>;
         let initialStore: ProxyHandler<T>;
@@ -113,6 +113,7 @@ class StatefulHookController {
         this.hookIndex++
         // onServerRendering should only execute once
         const onServerRendering = (asyncCallback: () => Promise<Partial<T>>) => {
+
             if (isServer && !hook.onServerRenderingExecuted) {
                 this.pendingUseStoreServerCallbackCounter = this.pendingUseStoreServerCallbackCounter + 1;
                 hook.onServerRenderingExecuted = true;
@@ -133,6 +134,48 @@ class StatefulHookController {
             }
         }
         return { store: hook.store as T, onServerRendering };
+    }
+
+    // Takes in a map of routes and components, return a functional component that renders corresponding routing
+    public useRouterRegister = (routingMap: { [key: string]: Function }, defaultComponent?: Function, currentPath?: string): { Switch: Function } => {
+
+        // For now it only execute once, so no need to care about old hook. Maybe in the future can let it act like useEffect
+        const oldHook = this.wipFiber?.previousState?.hooks?.[this.hookIndex] as RouterRegisterHook;
+        // TODO: support params
+        const _currentPath = isServer ? currentPath : window.location.pathname;
+        const previousPath = oldHook?.path;
+        const pathHandlingChanged = _currentPath !== previousPath;
+        let hook = {
+            ...oldHook,
+            path: _currentPath
+        }
+
+        if (pathHandlingChanged) {
+            this.switchComponent = routingMap[_currentPath] || defaultComponent || (() => null)
+            setTimeout(() => {
+                // TODO: get rid of flashing here
+                this.onTriggerRender && this.onTriggerRender();
+            })
+        }
+        this.wipFiber.hooks.push(hook)
+        this.hookIndex++;
+
+        return { Switch: this.switchComponent }
+    }
+
+    private routerFunctions = {
+        push: (path: string) => {
+            history.pushState({}, "", path);
+            this.onTriggerRender();
+        }
+    }
+
+    public useRouter = (): { push: (path: string) => void } => {
+
+        if (!isServer && !window.onpopstate) {
+            window.onpopstate = () => this.onTriggerRender();
+        }
+        return this.routerFunctions;
     }
 }
 

@@ -1,4 +1,4 @@
 import { Susuru, createElement } from 'susuru';
-import App from './App';
+import App from './pages';
 
 Susuru.render(<App />, document.getElementById("root"));

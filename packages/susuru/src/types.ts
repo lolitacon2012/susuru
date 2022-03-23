@@ -24,7 +24,7 @@ export interface Fiber {
   onDelete?: () => void
 }
 
-export type Hook = StateHook<any> | EffectHook | StoreHook<any>;
+export type Hook = StateHook<any> | EffectHook | StoreHook<any> | RouterRegisterHook;
 export type StateHook<T> = {
   state: T,
   nextState: T[]
@@ -37,4 +37,8 @@ export type StoreHook<T extends object> = {
   id: number,
   store: ProxyHandler<T>,
   onServerRenderingExecuted: boolean,
+}
+
+export type RouterRegisterHook = {
+  path: string,
 }
