@@ -1,12 +1,11 @@
 const fs = require('fs');
 const path = require('path');
-const { fileURLToPath } = require('url');
 const express = require('express');
 const { createServer: createViteServer } = require('vite');
 
 const isProd = process.env.NODE_ENV === 'production';
-// const __filename = fileURLToPath(import.meta.url);
-// const __dirname = path.dirname(__filename);
+
+const resolve = (p) => path.resolve(__dirname, p);
 
 async function createServer() {
     const app = express()
@@ -17,30 +16,36 @@ async function createServer() {
 
     if (isProd) {
         const { render: prodRender } = require('./dist/server/entry-server.js');
+
+        app.use(require('compression')())
+        app.use(
+            require('serve-static')(resolve('dist/client'), {
+                index: false
+            })
+        )
         app.use('*', async (req, res, next) => {
             const url = req.originalUrl
             try {
                 let template = fs.readFileSync(
-                    path.resolve(__dirname, 'dist/client/index.html'),
+                    resolve('dist/client/index.html'),
                     'utf-8'
                 )
                 const appHtml = await prodRender(url)
                 const html = template.replace(`<!--ssr-outlet-->`, appHtml)
                 res.status(200).set({ 'Content-Type': 'text/html' }).end(html)
             } catch (e) {
+                console.error(e)
                 next(e)
             }
         })
     } else {
-
         app.use(vite.middlewares)
         app.use('*', async (req, res, next) => {
             const url = req.originalUrl
-
             try {
                 // 1. Read index.html
                 let template = fs.readFileSync(
-                    path.resolve(__dirname, 'index.html'),
+                    resolve('index.html'),
                     'utf-8'
                 )
 
@@ -52,7 +57,7 @@ async function createServer() {
                 // 3. Load the server entry. vite.ssrLoadModule automatically transforms
                 //    your ESM source code to be usable in Node.js! There is no bundling
                 //    required, and provides efficient invalidation similar to HMR.
-                const { render } = await vite.ssrLoadModule('./entry-server.tsx')
+                const { render } = await vite.ssrLoadModule('./src/entry-server.tsx')
 
                 // 4. render the app HTML. This assumes entry-server.jsx's exported `render`
                 //    function calls appropriate framework SSR APIs,
@@ -72,6 +77,7 @@ async function createServer() {
             }
         })
     }
+    console.log('App running on port 3000.')
     app.listen(3000)
 }
 

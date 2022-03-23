@@ -21,6 +21,6 @@
     "dist"
   ],
   "include": [
-    "src", "demo/index.module.css"
+    "src", "web/index.module.css"
 , "global.d.ts"  ]
 }

@@ -1,11 +1,17 @@
+const path = require('path')
+
 export default {
-  port: '3002',
-  root: 'demo',
+  root: '.',
   esbuild: {
     jsxFactory: 'createElement',
     jsxFragment: 'Fragment',
     target: 'es2020',
     format: 'esm'
+  },
+  resolve:{
+    alias:{
+      'susuru' : path.resolve(__dirname, './../susuru/src')
+    },
   },
   server: {
     port: 3000

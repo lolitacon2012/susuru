@@ -1,5 +1,5 @@
 import { DEFAULT_APP_ROOT } from './constants';
-
+import voidElements from "void-elements";
 export const SSR_PREFIX = "__SSR_";
 export const SSR_ROOT_HYDRATION_ID = "__SSR_ROOT"
 export const SSR_TEXT_TYPE = "_text";
@@ -92,7 +92,7 @@ class SSRDocument {
         dom.nodeValue = text || '';
         return dom;
     }
-    public createElement = (type: string): SSRHtmlElement => {
+    public createElement = (type: string, props?: Record<string, string | number>): SSRHtmlElement => {
         this.domCounter = this.domCounter + 1;
         return {
             __internal: {
@@ -104,8 +104,12 @@ class SSRDocument {
             appendChild,
             removeEventListener,
             addEventListener,
-            removeChild
+            removeChild,
+            ...props
         }
+    }
+    public createElementNS = (ns: string, type: string, props?: Record<string, string | number>): SSRHtmlElement => {
+        return this.createElement(type, { ...props, xmlns: ns })
     }
 
     private normalizeAtrributeName = (p: string): string => {
@@ -125,7 +129,11 @@ class SSRDocument {
                 const attributesArray = Reflect.ownKeys(ssrDom).filter((p: string) => ((typeof ssrDom[p] === 'string') || (typeof ssrDom[p] === 'number'))).map((k: string) => `${this.normalizeAtrributeName(k)}="${ssrDom[k] || ''}"`);
                 attributesArray.push(`data-hydration-id="${ssrDom.__internal.hydrationId}"`);
                 const attributesString = attributesArray.join(' ');
-                return `<${type}${attributesArray.length > 0 ? ` ${attributesString}` : ''}>${childString}</${type}>`
+                if (voidElements[type]) {
+                    return `<${type}${attributesArray.length > 0 ? ` ${attributesString}` : ''}/>`
+                } else {
+                    return `<${type}${attributesArray.length > 0 ? ` ${attributesString}` : ''}>${childString}</${type}>`
+                }
             }
         }
     }

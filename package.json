@@ -1,35 +1,19 @@
 {
-  "name": "susuru",
-  "version": "0.0.1",
-  "typings": "./dist/types/index.d.ts",
-  "description": "Yet another frontend framework",
-  "repository": "https://github.com/lolitacon2012/Susuru.git",
-  "author": "Liu Dake <kannagi.cafe>",
-  "license": "Unlicense",
-  "scripts": {
-    "dev": "NODE_ENV=development node demo/server.js",
-    "clean": "rm -rf dist && rm -rf demo/dist",
-    "build": "yarn clean && rollup -c && yarn vite build --outDir dist/client && yarn vite build --outDir dist/server --ssr entry-server.tsx",
-    "serve": "NODE_ENV=production node demo/server.js"
-  },
-  "devDependencies": {
-    "@rollup/plugin-commonjs": "^21.0.2",
-    "@rollup/plugin-json": "^4.1.0",
-    "@rollup/plugin-node-resolve": "^13.1.3",
-    "express": "^4.17.3",
-    "rollup": "^2.70.0",
-    "rollup-plugin-polyfill-node": "^0.8.0",
-    "rollup-plugin-size": "^0.2.2",
-    "rollup-plugin-terser": "^7.0.2",
-    "rollup-plugin-typescript2": "^0.31.2",
-    "serve": "^13.0.2",
-    "tslib": "^2.3.1",
-    "typescript": "^4.6.2",
-    "vite": "^2.8.6"
-  },
-  "dependencies": {
-    "global": "^4.4.0",
-    "lodash.merge": "^4.6.2",
-    "systeminformation": "^5.11.9"
-  }
+    "name": "susuru",
+    "version": "0.0.1",
+    "description": "Yet another frontend framework",
+    "repository": "https://github.com/lolitacon2012/Susuru.git",
+    "author": "Liu Dake <kannagi.cafe>",
+    "license": "Unlicense",
+    "private": "true",
+    "workspaces": [
+        "packages/*"
+    ],
+    "scripts": {
+        "build": "yarn workspace susuru build && yarn workspace susuru-web build",
+        "release": "yarn build && yarn workspace susuru publish --access public",
+        "dev": "yarn workspace susuru-web dev",
+        "dev-ssr": "yarn workspace susuru-web dev-ssr",
+        "start-prod": "yarn build && yarn workspace susuru-web serve"
+    }
 }

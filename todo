@@ -7,16 +7,18 @@ DONE
 - Remove node is not working correctly
 - Server side rendering: hydration DOM
 - Server side rendering: hydration hook & useStore data
+- Fix HTML void element ssr problem
+- monorepo
+- prod build for web
 
 DOING
 - new scheduler
-- Server side rendering: data hydration
-- make project monorepo, separate demo and susuru
-- make a working prod build
+- homepage
 
 TODO
-- Fix <br> issue
+- Support svg and path
 - Support fragment
+- Support inline styles
 - Improve performance of updating view
 - Server side rendering: hydration
 - clean up all constants

@@ -1,5 +1,5 @@
-import { Susuru, createElement } from '../src/index';
-import App from './src/App';
+import { Susuru, createElement } from 'susuru';
+import App from './App';
 
 export const render = async (url, context) => {
   // console.log({

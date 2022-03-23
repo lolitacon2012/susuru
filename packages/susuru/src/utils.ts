@@ -50,5 +50,11 @@ const proxyHandlerFactory = (
     return handler;
 };
 
-const isServer = !window;
+const isServer = function () {
+    try {
+        return (process?.versions?.node !== undefined);
+    } catch (e) {
+        return false;
+    }
+}();
 export { debugLog, flatArray, className, proxifyObject, proxyHandlerFactory, isServer };

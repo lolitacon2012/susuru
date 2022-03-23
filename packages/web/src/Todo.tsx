@@ -1,4 +1,4 @@
-import { Susuru, createElement } from '../../src/index';
+import { Susuru, createElement } from 'susuru';
 import style from './index.module.css';
 
 interface TaskProps {
@@ -26,12 +26,11 @@ const INITIAL_DATA = [
 ]
 
 const Todo = () => {
-    const LOCALSTORAGE_KEY = 'susuru-saved-tasks';
     const { store, onServerRendering } = Susuru.useStore({
         tasks: [] as Task[],
         newTaskName: "",
         isLoading: true,
-        serverCpuInfo: "",
+        serverCpuInfo: "Unable to know from client side.", // This value should be replaced in SSR.
     });
 
     onServerRendering(async () => {
@@ -49,14 +48,7 @@ const Todo = () => {
 
     Susuru.useEffect(() => {
         // useEffect will never execute on server side stage
-        const savedTasks = window.localStorage.getItem(LOCALSTORAGE_KEY) || '';
-        try {
-            const data = JSON.parse(savedTasks);
-            store.tasks = data;
-        } catch (e) {
-            const data = INITIAL_DATA;
-            store.tasks = data;
-        }
+        store.tasks = INITIAL_DATA;
         store.isLoading = false;
     }, []);
 
@@ -68,7 +60,6 @@ const Todo = () => {
         });
         store.tasks = newTasks;
         store.newTaskName = "";
-        localStorage.setItem(LOCALSTORAGE_KEY, JSON.stringify(newTasks));
     }
     return (
         <div className={style.app}>
@@ -85,7 +76,6 @@ const Todo = () => {
                     e.preventDefault();
                     const newTasks = store.tasks.filter(task => task.id !== t.id);
                     store.tasks = newTasks;
-                    localStorage.setItem(LOCALSTORAGE_KEY, JSON.stringify(newTasks));
                 }} />)}
             </div>
         </div>
