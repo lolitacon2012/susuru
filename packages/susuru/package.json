@@ -1,6 +1,6 @@
 {
   "name": "susuru",
-  "version": "0.0.1-alpha.2",
+  "version": "0.0.1-alpha.3",
   "typings": "./dist/types/index.d.ts",
   "description": "Yet another frontend framework",
   "repository": "https://github.com/lolitacon2012/Susuru.git",
@@ -33,7 +33,6 @@
     "typescript": "^4.6.2"
   },
   "dependencies": {
-    "is-browser": "^2.1.0",
     "lodash.merge": "^4.6.2"
   }
 }
