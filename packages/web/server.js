@@ -13,7 +13,6 @@ async function createServer() {
     const vite = await createViteServer({
         server: { middlewareMode: 'ssr' }
     })
-
     if (isProd) {
         const { render: prodRender } = require('./dist/server/entry-server.js');
 
@@ -41,6 +40,7 @@ async function createServer() {
     } else {
         app.use(vite.middlewares)
         app.use('*', async (req, res, next) => {
+
             const url = req.originalUrl
             try {
                 // 1. Read index.html

@@ -11,10 +11,10 @@ class StatefulHookController {
     private hookIndex: number = null;
     private wipFiber: Fiber = null;
     private onTriggerRender: (cb?: () => void) => Promise<void>;
-    private pendingUseStoreServerCallbackCounter: number = 0;
     private onUseStoreServerCallbackFinished: (storeData: ServerSideStoreHydrationData) => void;
     private serverSideStoreHydrationData: ServerSideStoreHydrationData = {}; // Used both on server side and client side. key: store hook id, value: store data
     private switchComponent: Function;
+    public onServerRenderingCallbackPool: Promise<any>[];
     // store counter. This value is global, which makes hook controller stateful.
     private storeCounter: number = undefined;
 
@@ -29,13 +29,14 @@ class StatefulHookController {
             }
         }
         this.storeCounter = 0;
+        this.onServerRenderingCallbackPool = [];
     }
 
     public reset = () => {
         this.wipFiber = undefined;
         this.hookIndex = 0;
         this.onTriggerRender = undefined;
-        this.pendingUseStoreServerCallbackCounter = 0;
+        this.onServerRenderingCallbackPool = [];
         this.onUseStoreServerCallbackFinished = undefined;
         this.serverSideStoreHydrationData = {};
         this.storeCounter = 0;
@@ -113,18 +114,16 @@ class StatefulHookController {
         this.hookIndex++
         // onServerRendering should only execute once
         const onServerRendering = (asyncCallback: () => Promise<Partial<T>>) => {
-
             if (isServer && !hook.onServerRenderingExecuted) {
-                this.pendingUseStoreServerCallbackCounter = this.pendingUseStoreServerCallbackCounter + 1;
-                hook.onServerRenderingExecuted = true;
-                asyncCallback().then((partialStore) => {
+                this.onServerRenderingCallbackPool.push(asyncCallback().then((partialStore) => {
                     this.serverSideStoreHydrationData[currentNewStoreId] = partialStore;
                     // how to set store again here??? now store is being set in component
-                }).catch(err => {
-                    console.error(err);
-                }).finally(() => {
-                    this.pendingUseStoreServerCallbackCounter = this.pendingUseStoreServerCallbackCounter - 1;
-                    if (this.pendingUseStoreServerCallbackCounter === 0) {
+                }));
+                hook.onServerRenderingExecuted = true;
+                const prev_l = this.onServerRenderingCallbackPool.length;
+                Promise.all(this.onServerRenderingCallbackPool).then(() => {
+                    const c_l = this.onServerRenderingCallbackPool.length;
+                    if (prev_l === c_l) {
                         this.onTriggerRender().then(() => {
                             this.onUseStoreServerCallbackFinished && this.onUseStoreServerCallbackFinished(this.serverSideStoreHydrationData);
                             this.reset();

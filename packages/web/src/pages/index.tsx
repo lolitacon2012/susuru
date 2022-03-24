@@ -7,7 +7,6 @@ import Todo from "./../components/TodoList";
 const App = (props: { path?: string }) => {
     const router = Susuru.useRouter();
     const { onServerRendering } = Susuru.useStore({});
-    onServerRendering(async () => ({}));
     const { Switch } = Susuru.useRouterRegister({
         '/main': Main,
         '/docs': Docs,

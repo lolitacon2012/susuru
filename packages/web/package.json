@@ -12,10 +12,11 @@
     "serve": "NODE_ENV=production node server.js"
   },
   "dependencies": {
-    "vite": "^2.8.6",
-    "express": "^4.17.3",
     "compression": "^1.7.4",
+    "express": "^4.17.3",
+    "node-cache": "^5.1.2",
     "serve-static": "^1.14.2",
-    "systeminformation": "^5.11.9"
+    "systeminformation": "^5.11.9",
+    "vite": "^2.8.6"
   }
 }

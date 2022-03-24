@@ -13,8 +13,7 @@ const plugins = [
   // nodePolyfills(),
   typescript({
     tsconfig: 'tsconfig.json',
-    removeComments: true,
-    useTsconfigDeclarationDir: true,
+    removeComments: true
   }),
   terser(),
   size(),

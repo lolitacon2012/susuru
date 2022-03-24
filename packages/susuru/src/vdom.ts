@@ -357,15 +357,21 @@ class VdomController {
     }>((resolve) => {
         const ssrDocument = new SSRDocument(containerId || DEFAULT_APP_ROOT); // remember to remove
         this._document = ssrDocument; // remember to remove
-        this.hookController.setOnUseStoreServerCallbackFinished((storeData) => {
+        const onTaskFinished = (storeData?: object) => {
             const htmlString = ssrDocument.exportString();
-            const dataScript = `<script>window.__ssr__ = '${JSON.stringify(storeData)}'</script>`;
+            const dataScript = storeData ? `<script>window.__ssr__ = '${JSON.stringify(storeData)}'</script>` : '';
             resolve({
                 htmlString,
                 dataScript
             });
-        })
-        this.render(element, this._document.getRoot(), undefined, () => { });
+        }
+        this.hookController.setOnUseStoreServerCallbackFinished(onTaskFinished);
+        this.render(element, this._document.getRoot(), undefined, () => {
+            // If no callback in useStore callback pool, return here
+            if(!this.hookController.onServerRenderingCallbackPool.length){
+                onTaskFinished();
+            }
+        });
     }).catch(error => {
         console.error(error);
         Promise.reject({

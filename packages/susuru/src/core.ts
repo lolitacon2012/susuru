@@ -1,5 +1,6 @@
 import HookController from './hook';
 import Scheduler from './scheduler';
+import renderToStringWithCache from './ssrCache';
 import VdomController from './vdom';
 
 const scheduler = new Scheduler();
@@ -19,4 +20,4 @@ const useStore = hookController.useStore;
 const useRouterRegister = hookController.useRouterRegister;
 const useRouter = hookController.useRouter;
 
-export { createElement, render, renderToString, resetVdom, useRouterRegister, useRouter, useState, useEffect, useStore };
+export { createElement, render, renderToString, resetVdom, useRouterRegister, useRouter, useState, useEffect, useStore, renderToStringWithCache };

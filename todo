@@ -10,13 +10,14 @@ DONE
 - Fix HTML void element ssr problem
 - monorepo
 - prod build for web
+- Added a simple cache
+- Use promise all to control ssr
 
 DOING
 - new scheduler
 - homepage
 - routing
 - fix routing switch flashing
-- fix: when no store is used and no onServerRendering is called, render string wont return. Maybe can use promise.all to solve this issue.
 
 TODO
 - Execute onUnmount on unmounted
